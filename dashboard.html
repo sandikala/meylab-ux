@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEY CyberLab — Dashboard Dosen</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --ink: #1a1714; --ink-soft: #4a4540; --ink-muted: #8a837a;
+  --paper: #faf8f5; --paper-warm: #f3efe8; --paper-card: #ffffff;
+  --accent: #c84b2f; --accent-light: #f5e8e4; --accent-dark: #8f3220;
+  --blue: #2563a8; --blue-light: #e8f0fb;
+  --green: #1a7a4a; --green-light: #e4f5ec;
+  --purple: #5b3fa0; --purple-light: #eeebf8;
+  --amber: #b45309; --amber-light: #fef3e2;
+  --border: rgba(26,23,20,0.1); --border-md: rgba(26,23,20,0.18);
+  --radius: 12px; --radius-sm: 8px;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
+  --shadow: 0 2px 12px rgba(26,23,20,0.08), 0 1px 3px rgba(26,23,20,0.06);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--paper); color: var(--ink); font-size: 15px; min-height: 100vh; }
+
+/* LOGIN */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--ink); }
+.login-box { background: #fff; border-radius: 16px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+.login-box h1 { font-family: var(--serif); font-size: 1.8rem; color: var(--ink); margin-bottom: 0.5rem; }
+.login-box p { color: var(--ink-muted); font-size: 13px; margin-bottom: 2rem; }
+.login-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #e8a090; background: var(--ink); padding: 4px 12px; border-radius: 100px; display: inline-block; margin-bottom: 1.5rem; }
+
+/* SHELL */
+.shell { display: flex; min-height: 100vh; }
+.sidebar { width: 240px; background: var(--ink); color: var(--paper); flex-shrink: 0; display: flex; flex-direction: column; }
+.sidebar-brand { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sidebar-brand h2 { font-family: var(--serif); font-size: 1.1rem; color: var(--paper); }
+.sidebar-brand h2 span { color: #e8a090; }
+.sidebar-brand p { font-size: 11px; color: rgba(250,248,245,0.4); margin-top: 3px; }
+.sidebar-nav { flex: 1; padding: 1rem 0; }
+.s-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 1.5rem; font-size: 13px; font-weight: 500; color: rgba(250,248,245,0.6); cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+.s-nav-item:hover { color: var(--paper); background: rgba(255,255,255,0.05); }
+.s-nav-item.active { color: #e8a090; border-left-color: #e8a090; background: rgba(232,160,144,0.08); }
+.s-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+.sidebar-footer button { background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(250,248,245,0.5); font-size: 12px; padding: 7px 14px; border-radius: var(--radius-sm); cursor: pointer; width: 100%; font-family: var(--sans); transition: all 0.15s; }
+.sidebar-footer button:hover { border-color: rgba(255,255,255,0.4); color: var(--paper); }
+
+.content { flex: 1; overflow: auto; }
+.content-inner { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* HEADER */
+.page-header { margin-bottom: 2rem; }
+.page-header h1 { font-family: var(--serif); font-size: 2rem; color: var(--ink); margin-bottom: 0.25rem; }
+.page-header p { color: var(--ink-muted); font-size: 14px; }
+
+/* METRICS */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.metric-card { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; box-shadow: var(--shadow); }
+.metric-card.accent { background: var(--ink); border-color: var(--ink); }
+.m-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin-bottom: 0.5rem; }
+.metric-card.accent .m-label { color: rgba(250,248,245,0.45); }
+.m-val { font-family: var(--serif); font-size: 2.5rem; color: var(--ink); line-height: 1; }
+.metric-card.accent .m-val { color: #e8a090; }
+.m-sub { font-size: 12px; color: var(--ink-muted); margin-top: 6px; }
+.metric-card.accent .m-sub { color: rgba(250,248,245,0.4); }
+
+/* CARDS */
+.card { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 10px; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; border-radius: var(--radius-sm); border: none; font-family: var(--sans); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-ghost { background: transparent; border: 1px solid var(--border-md); color: var(--ink-soft); }
+.btn-ghost:hover { background: var(--paper-warm); color: var(--ink); }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover { background: #145c38; }
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* FORM */
+.form-group { margin-bottom: 1rem; }
+.form-label { font-size: 13px; font-weight: 500; color: var(--ink); display: block; margin-bottom: 5px; }
+.form-input { width: 100%; padding: 9px 13px; border: 1px solid var(--border-md); border-radius: var(--radius-sm); font-family: var(--sans); font-size: 14px; color: var(--ink); background: var(--paper); outline: none; transition: border-color 0.15s; }
+.form-input:focus { border-color: var(--accent); }
+
+/* TABLE */
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 800px; }
+.data-table th { text-align: left; padding: 9px 12px; background: var(--paper-warm); color: var(--ink-soft); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+.data-table th:hover { background: var(--paper-warm); color: var(--ink); }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--ink); vertical-align: middle; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(26,23,20,0.02); }
+
+/* PILLS */
+.pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; }
+.pill-green { background: var(--green-light); color: var(--green); }
+.pill-blue { background: var(--blue-light); color: var(--blue); }
+.pill-amber { background: var(--amber-light); color: var(--amber); }
+.pill-red { background: var(--accent-light); color: var(--accent-dark); }
+
+/* CHART BARS */
+.bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.bar-label { width: 130px; font-size: 12px; color: var(--ink-soft); flex-shrink: 0; text-align: right; }
+.bar-track { flex: 1; background: var(--paper-warm); border-radius: 100px; height: 22px; position: relative; }
+.bar-fill { height: 100%; border-radius: 100px; display: flex; align-items: center; padding-left: 10px; font-size: 11px; font-weight: 600; color: white; transition: width 0.8s ease; min-width: 40px; }
+.bar-sus { background: linear-gradient(90deg, var(--accent-dark), var(--accent)); }
+.bar-umux { background: linear-gradient(90deg, var(--blue), #3b82c4); }
+.bar-ueq { background: linear-gradient(90deg, var(--purple), #7c5cc4); }
+
+/* FILTER BAR */
+.filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.filter-bar input, .filter-bar select { padding: 8px 12px; border: 1px solid var(--border-md); border-radius: var(--radius-sm); font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--paper); outline: none; }
+
+/* STATUS */
+.status-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-muted); margin-bottom: 1rem; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+.status-dot.loading { background: var(--amber); animation: pulse 1s infinite; }
+.status-dot.err { background: var(--accent); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* CALLOUT */
+.callout { border-left: 3px solid; padding: 0.75rem 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 13px; margin-bottom: 1rem; }
+.callout-tip { border-color: var(--green); background: var(--green-light); color: #0f5c36; }
+.callout-warn { border-color: var(--amber); background: var(--amber-light); color: #7a3a06; }
+.callout-note { border-color: var(--blue); background: var(--blue-light); color: #1a4a80; }
+
+/* SETUP PAGE */
+.step-card { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1rem; overflow: hidden; }
+.step-head { display: flex; align-items: center; gap: 1rem; padding: 1.25rem 1.5rem; background: var(--paper-warm); }
+.step-num { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.step-num.done { background: var(--green); }
+.step-head h3 { font-size: 15px; font-weight: 600; color: var(--ink); }
+.step-head p { font-size: 12px; color: var(--ink-muted); }
+.step-body { padding: 1.5rem; }
+.code-block { background: var(--ink); color: #e8a090; font-family: var(--mono); font-size: 13px; border-radius: var(--radius-sm); padding: 1rem 1.25rem; line-height: 1.8; overflow-x: auto; margin: 0.75rem 0; }
+.code-block .c { color: rgba(250,248,245,0.3); }
+.code-block .k { color: #79c0ff; }
+.code-block .s { color: #a5d6ff; }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 3rem 2rem; color: var(--ink-muted); }
+.empty-state .es-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+@media (max-width: 768px) {
+  .shell { flex-direction: column; }
+  .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; }
+  .sidebar-brand { flex: 1; padding: 1rem; }
+  .sidebar-nav { display: flex; flex-direction: row; width: 100%; overflow-x: auto; padding: 0; }
+  .s-nav-item { border-left: none; border-bottom: 3px solid transparent; padding: 0.75rem 1rem; white-space: nowrap; flex-shrink: 0; }
+  .s-nav-item.active { border-bottom-color: #e8a090; border-left: none; }
+  .sidebar-footer { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SUPABASE CONFIG ══════════════════════════════════ -->
+<script>
+const SUPABASE_URL = 'https://aaukqrmznbxsujlpwnhp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhdWtxcm16bmJ4c3VqbHB3bmhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjExMTgsImV4cCI6MjA5MzU5NzExOH0.UjMbRFtrhZHG2zRVYzOjdwRKJAZRR7u0LVW2SVwz2Go';
+// Password dosen — GANTI SEBELUM DEPLOY
+const DOSEN_PASSWORD = 'meylab2026';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+let sb;
+try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e){}
+</script>
+
+<!-- ══ LOGIN ══════════════════════════════════════════ -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <div class="login-tag">MEY CyberLab · Dosen</div>
+    <h1>Dashboard Riset</h1>
+    <p>Masuk untuk mengakses data kuesioner mahasiswa</p>
+    <div class="form-group">
+      <label class="form-label">Password Dosen</label>
+      <input type="password" id="pw-input" class="form-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Masuk →</button>
+    <div id="login-err" style="color:var(--accent);font-size:13px;margin-top:0.75rem;display:none;">Password salah. Coba lagi.</div>
+    <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--ink-muted);">
+      Password default: <code style="font-family:var(--mono);background:var(--paper-warm);padding:2px 6px;border-radius:4px;">meylab2024</code><br>
+      Ganti di file dashboard.html sebelum deploy.
+    </div>
+  </div>
+</div>
+
+<!-- ══ SHELL ══════════════════════════════════════════ -->
+<div id="app-shell" class="shell" style="display:none;">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <h2>MEY <span>CyberLab</span></h2>
+      <p>Dashboard Dosen</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="s-nav-item active" onclick="showView('overview')"><span class="s-nav-icon">📊</span> Ringkasan</div>
+      <div class="s-nav-item" onclick="showView('data')"><span class="s-nav-icon">🗃</span> Data Mahasiswa</div>
+      <div class="s-nav-item" onclick="showView('analisis')"><span class="s-nav-icon">📈</span> Analisis Visual</div>
+      <div class="s-nav-item" onclick="showView('setup')"><span class="s-nav-icon">⚙️</span> Setup & Panduan</div>
+    </nav>
+    <div class="sidebar-footer">
+      <button onclick="doLogout()">Keluar ↗</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="content-inner">
+
+      <!-- ── OVERVIEW ── -->
+      <div id="view-overview" class="view active">
+        <div class="page-header">
+          <h1>Ringkasan Data</h1>
+          <p>Rekap respons mahasiswa yang masuk ke server</p>
+        </div>
+        <div id="status-bar-overview" class="status-bar">
+          <div class="status-dot loading" id="sd-overview"></div>
+          <span id="st-overview">Memuat data...</span>
+        </div>
+        <div id="metrics-grid" class="metrics-grid"></div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Rata-rata Skor per Instrumen</span>
+            <button class="btn btn-ghost" onclick="loadData()">↻ Refresh</button>
+          </div>
+          <div id="bar-chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">10 Data Terbaru</span>
+            <a href="#" onclick="showView('data')" style="font-size:13px;color:var(--blue);">Lihat semua →</a>
+          </div>
+          <div id="recent-table" class="table-wrap"></div>
+        </div>
+      </div>
+
+      <!-- ── DATA ── -->
+      <div id="view-data" class="view">
+        <div class="page-header">
+          <h1>Data Mahasiswa</h1>
+          <p>Seluruh respons kuesioner yang masuk</p>
+        </div>
+        <div class="filter-bar">
+          <input type="text" id="filter-search" placeholder="Cari nama / NIM / aplikasi..." oninput="filterTable()">
+          <select id="filter-kelas" onchange="filterTable()">
+            <option value="">Semua Kelas</option>
+            <option>A</option><option>B</option><option>C</option><option>D</option>
+          </select>
+          <select id="filter-sort" onchange="filterTable()">
+            <option value="timestamp_desc">Terbaru</option>
+            <option value="timestamp_asc">Terlama</option>
+            <option value="sus_desc">SUS Tertinggi</option>
+            <option value="sus_asc">SUS Terendah</option>
+          </select>
+        </div>
+        <div class="btn-group" style="margin-bottom:1.25rem;">
+          <button class="btn btn-green" onclick="exportCSV()">⬇ Export CSV</button>
+          <button class="btn btn-ghost" onclick="exportJSON()">⬇ Export JSON</button>
+          <button class="btn btn-ghost" style="color:var(--accent);" onclick="confirmClear()">🗑 Hapus Semua</button>
+        </div>
+        <div id="status-bar-data" class="status-bar">
+          <div class="status-dot" id="sd-data"></div>
+          <span id="st-data">— data</span>
+        </div>
+        <div class="card" style="padding:0;">
+          <div id="full-table" class="table-wrap"></div>
+        </div>
+      </div>
+
+      <!-- ── ANALISIS ── -->
+      <div id="view-analisis" class="view">
+        <div class="page-header">
+          <h1>Analisis Visual</h1>
+          <p>Distribusi skor dan profil UEQ seluruh kelas</p>
+        </div>
+        <div id="analisis-content"></div>
+      </div>
+
+      <!-- ── SETUP ── -->
+      <div id="view-setup" class="view">
+        <div class="page-header">
+          <h1>Setup & Panduan</h1>
+          <p>Langkah-langkah menyambungkan platform ke server</p>
+        </div>
+
+        <div class="callout callout-note">
+          <strong>Tentang platform ini:</strong> Sistem menggunakan <strong>Supabase</strong> sebagai database — gratis hingga 500MB dan 50.000 baris data. Cukup untuk ratusan kelas selama bertahun-tahun. File HTML di-host di <strong>GitHub Pages</strong> (gratis selamanya).
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-num">1</div>
+            <div><h3>Buat Akun Supabase</h3><p>Database gratis untuk menyimpan semua jawaban mahasiswa</p></div>
+          </div>
+          <div class="step-body">
+            <p style="font-size:14px;margin-bottom:1rem;">Kunjungi <strong>supabase.com</strong> → klik <strong>Start your project</strong> → daftar dengan akun GitHub atau email kampus.</p>
+            <ol style="font-size:14px;line-height:2;padding-left:1.25rem;color:var(--ink-soft);">
+              <li>Klik <strong>New project</strong></li>
+              <li>Beri nama: <code style="background:var(--paper-warm);padding:2px 6px;border-radius:4px;font-family:var(--mono);">meylab-ux</code></li>
+              <li>Pilih region: <strong>Southeast Asia (Singapore)</strong> — paling dekat Indonesia</li>
+              <li>Klik <strong>Create new project</strong> — tunggu ~2 menit</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-num">2</div>
+            <div><h3>Buat Tabel Database</h3><p>Jalankan SQL berikut di Supabase SQL Editor</p></div>
+          </div>
+          <div class="step-body">
+            <p style="font-size:14px;margin-bottom:1rem;">Di Supabase, klik menu <strong>SQL Editor</strong> di sidebar kiri, lalu paste dan jalankan SQL berikut:</p>
+            <div class="code-block"><span class="c">-- Buat tabel responses</span>
+<span class="k">CREATE TABLE</span> responses (
+  id          <span class="k">BIGSERIAL PRIMARY KEY</span>,
+  timestamp   <span class="k">TIMESTAMPTZ DEFAULT NOW</span>(),
+  nama        <span class="k">TEXT NOT NULL</span>,
+  nim         <span class="k">TEXT NOT NULL</span>,
+  kelas       <span class="k">TEXT</span>,
+  aplikasi    <span class="k">TEXT NOT NULL</span>,
+  pengalaman  <span class="k">TEXT</span>,
+  sus_score   <span class="k">INTEGER</span>,
+  umux_score  <span class="k">INTEGER</span>,
+  ueq_attractiveness  <span class="k">NUMERIC</span>,
+  ueq_perspicuity     <span class="k">NUMERIC</span>,
+  ueq_efficiency      <span class="k">NUMERIC</span>,
+  ueq_dependability   <span class="k">NUMERIC</span>,
+  ueq_stimulation     <span class="k">NUMERIC</span>,
+  ueq_novelty         <span class="k">NUMERIC</span>,
+  sus_raw     <span class="k">TEXT</span>,
+  ueq_raw     <span class="k">TEXT</span>,
+  umux_raw    <span class="k">TEXT</span>
+);
+
+<span class="c">-- Izinkan mahasiswa mengirim data tanpa login (INSERT only)</span>
+<span class="k">ALTER TABLE</span> responses <span class="k">ENABLE ROW LEVEL SECURITY</span>;
+
+<span class="k">CREATE POLICY</span> <span class="s">"allow insert for all"</span>
+  <span class="k">ON</span> responses <span class="k">FOR INSERT</span>
+  <span class="k">WITH CHECK</span> (<span class="k">true</span>);
+
+<span class="k">CREATE POLICY</span> <span class="s">"allow select for all"</span>
+  <span class="k">ON</span> responses <span class="k">FOR SELECT</span>
+  <span class="k">USING</span> (<span class="k">true</span>);</div>
+            <p style="font-size:13px;color:var(--ink-muted);">Klik tombol <strong>Run</strong> (▶) — jika berhasil akan muncul pesan "Success".</p>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-num">3</div>
+            <div><h3>Ambil URL & API Key</h3><p>Dua nilai yang perlu dipasang di kedua file HTML</p></div>
+          </div>
+          <div class="step-body">
+            <p style="font-size:14px;margin-bottom:1rem;">Di Supabase, klik <strong>Settings</strong> (ikon gear) → <strong>API</strong>. Salin dua nilai ini:</p>
+            <div style="display:grid;gap:1rem;">
+              <div style="background:var(--paper-warm);border-radius:var(--radius-sm);padding:1rem;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:6px;">Project URL</div>
+                <code style="font-family:var(--mono);font-size:13px;color:var(--blue);">https://xxxxxxxxxxxx.supabase.co</code>
+              </div>
+              <div style="background:var(--paper-warm);border-radius:var(--radius-sm);padding:1rem;">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-muted);margin-bottom:6px;">anon / public key</div>
+                <code style="font-family:var(--mono);font-size:13px;color:var(--blue);word-break:break-all;">eyJhbGci... (kunci panjang)</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-num">4</div>
+            <div><h3>Pasang Key di Kedua File HTML</h3><p>index.html (mahasiswa) dan dashboard.html (dosen)</p></div>
+          </div>
+          <div class="step-body">
+            <p style="font-size:14px;margin-bottom:1rem;">Buka kedua file HTML dengan teks editor (Notepad, VS Code, dll). Cari dan ganti dua baris ini:</p>
+            <div class="code-block"><span class="c">// SEBELUM (ada di kedua file):</span>
+<span class="k">const</span> SUPABASE_URL = <span class="s">'GANTI_DENGAN_URL_SUPABASE_ANDA'</span>;
+<span class="k">const</span> SUPABASE_KEY = <span class="s">'GANTI_DENGAN_ANON_KEY_SUPABASE_ANDA'</span>;
+
+<span class="c">// SESUDAH (isi dengan nilai dari Supabase):</span>
+<span class="k">const</span> SUPABASE_URL = <span class="s">'https://xxxx.supabase.co'</span>;
+<span class="k">const</span> SUPABASE_KEY = <span class="s">'eyJhbGciOiJIUzI1Ni...'</span>;</div>
+            <div class="callout callout-warn" style="margin-top:1rem;"><strong>Keamanan:</strong> anon key aman dipublikasikan — hanya bisa INSERT dan SELECT. Kunci service_role jangan pernah dipasang di file HTML!</div>
+            <p style="font-size:14px;margin-top:1rem;">Juga ganti password dosen di <strong>dashboard.html</strong>:</p>
+            <div class="code-block"><span class="k">const</span> DOSEN_PASSWORD = <span class="s">'password_baru_anda'</span>;</div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-num">5</div>
+            <div><h3>Upload ke GitHub Pages</h3><p>Host kedua file gratis selamanya</p></div>
+          </div>
+          <div class="step-body">
+            <ol style="font-size:14px;line-height:2.2;padding-left:1.25rem;color:var(--ink-soft);">
+              <li>Buat akun di <strong>github.com</strong> jika belum ada</li>
+              <li>Klik <strong>"+"</strong> → <strong>New repository</strong></li>
+              <li>Nama: <code style="background:var(--paper-warm);padding:2px 6px;border-radius:4px;font-family:var(--mono);">meylab-ux</code>, pilih <strong>Public</strong></li>
+              <li>Klik <strong>Create repository</strong></li>
+              <li>Upload <code style="background:var(--paper-warm);padding:2px 6px;border-radius:4px;font-family:var(--mono);">index.html</code> dan <code style="background:var(--paper-warm);padding:2px 6px;border-radius:4px;font-family:var(--mono);">dashboard.html</code></li>
+              <li>Ke <strong>Settings</strong> → <strong>Pages</strong> → Source: <strong>main / root</strong> → Save</li>
+            </ol>
+            <div class="callout callout-tip" style="margin-top:1rem;">
+              <strong>URL yang akan aktif:</strong><br>
+              Mahasiswa: <code>https://[username].github.io/meylab-ux/</code><br>
+              Dosen: <code>https://[username].github.io/meylab-ux/dashboard.html</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-card">
+          <div class="step-head">
+            <div class="step-num" style="background:var(--green);">✓</div>
+            <div><h3>Selesai! Bagikan ke Mahasiswa</h3><p>Platform siap digunakan</p></div>
+          </div>
+          <div class="step-body">
+            <p style="font-size:14px;margin-bottom:1rem;">Bagikan URL <code>index.html</code> ke mahasiswa via grup WA/LMS. Data akan langsung masuk ke tab <strong>Data Mahasiswa</strong> di dashboard ini.</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div style="background:var(--green-light);border-radius:var(--radius-sm);padding:1rem;">
+                <div style="font-size:11px;font-weight:600;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">💰 Biaya</div>
+                <div style="font-size:20px;font-weight:700;color:var(--green);">Rp 0</div>
+                <div style="font-size:12px;color:var(--green);margin-top:4px;">Gratis selamanya</div>
+              </div>
+              <div style="background:var(--blue-light);border-radius:var(--radius-sm);padding:1rem;">
+                <div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">📦 Kapasitas</div>
+                <div style="font-size:20px;font-weight:700;color:var(--blue);">50rb+</div>
+                <div style="font-size:12px;color:var(--blue);margin-top:4px;">Baris data gratis</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /view-setup -->
+    </div><!-- /content-inner -->
+  </div><!-- /content -->
+</div><!-- /shell -->
+
+<script>
+// ══ STATE ═════════════════════════════════════════════
+let allData = [];
+let filteredData = [];
+
+// ══ LOGIN ═════════════════════════════════════════════
+function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === DOSEN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'flex';
+    loadData();
+  } else {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+function doLogout() {
+  document.getElementById('app-shell').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+}
+
+// ══ VIEW SWITCHING ════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('.s-nav-item').forEach((n, i) => {
+    n.classList.toggle('active', ['overview','data','analisis','setup'][i] === name);
+  });
+  if (name === 'analisis') renderAnalisis();
+}
+
+// ══ DATA LOADING ══════════════════════════════════════
+async function loadData() {
+  setStatus('overview', 'loading', 'Memuat data dari server...');
+  setStatus('data', 'loading', 'Memuat...');
+
+  if (!sb || SUPABASE_URL === 'GANTI_DENGAN_URL_SUPABASE_ANDA') {
+    allData = getDemoData();
+    setStatus('overview', 'ok', `Demo mode — ${allData.length} data contoh`);
+    setStatus('data', 'ok', `${allData.length} responden (demo)`);
+    renderAll();
+    return;
+  }
+
+  try {
+    const { data, error } = await sb.from('responses').select('*').order('timestamp', { ascending: false });
+    if (error) throw error;
+    allData = data || [];
+    setStatus('overview', 'ok', `${allData.length} responden · Terakhir diperbarui ${new Date().toLocaleTimeString('id-ID')}`);
+    setStatus('data', 'ok', `${allData.length} responden`);
+    renderAll();
+  } catch(e) {
+    setStatus('overview', 'err', 'Gagal memuat: ' + e.message);
+    setStatus('data', 'err', 'Error');
+  }
+}
+
+function setStatus(view, type, msg) {
+  const dot = document.getElementById('sd-' + view);
+  const txt = document.getElementById('st-' + view);
+  if (!dot || !txt) return;
+  dot.className = 'status-dot' + (type === 'loading' ? ' loading' : type === 'err' ? ' err' : '');
+  txt.textContent = msg;
+}
+
+function renderAll() {
+  filteredData = [...allData];
+  renderMetrics();
+  renderBarChart();
+  renderRecentTable();
+  renderFullTable();
+}
+
+// ══ METRICS ═══════════════════════════════════════════
+function renderMetrics() {
+  const d = allData;
+  if (!d.length) {
+    document.getElementById('metrics-grid').innerHTML = '<div style="color:var(--ink-muted);font-size:14px;">Belum ada data. Minta mahasiswa mengisi kuesioner.</div>';
+    return;
+  }
+  const avg = (key) => (d.reduce((s,r) => s + (r[key]||0), 0) / d.length).toFixed(1);
+  const avgSUS = avg('sus_score');
+  const grade = susGrade(avgSUS);
+  document.getElementById('metrics-grid').innerHTML = `
+    <div class="metric-card accent">
+      <div class="m-label">Total Responden</div>
+      <div class="m-val">${d.length}</div>
+      <div class="m-sub">dari ${[...new Set(d.map(r=>r.kelas))].filter(Boolean).length} kelas</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Rata-rata SUS</div>
+      <div class="m-val">${avgSUS}</div>
+      <div class="m-sub"><span class="pill ${grade.cls}">${grade.label}</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Rata-rata UMUX</div>
+      <div class="m-val">${avg('umux_score')}</div>
+      <div class="m-sub">dari 100</div>
+    </div>
+    <div class="metric-card">
+      <div class="m-label">Aplikasi Diuji</div>
+      <div class="m-val">${[...new Set(d.map(r=>r.aplikasi))].length}</div>
+      <div class="m-sub">aplikasi berbeda</div>
+    </div>
+  `;
+}
+
+// ══ BAR CHART ═════════════════════════════════════════
+function renderBarChart() {
+  const d = allData;
+  if (!d.length) { document.getElementById('bar-chart').innerHTML = '<div class="empty-state"><div class="es-icon">📋</div><p>Belum ada data.</p></div>'; return; }
+  const avg = (key) => d.reduce((s,r) => s + (r[key]||0), 0) / d.length;
+  const dims = ['attractiveness','perspicuity','efficiency','dependability','stimulation','novelty'];
+  const avgSUS = avg('sus_score');
+  const avgUMUX = avg('umux_score');
+
+  let html = `
+    <div class="bar-row"><div class="bar-label">SUS</div><div class="bar-track"><div class="bar-fill bar-sus" style="width:${avgSUS}%">${avgSUS.toFixed(1)}</div></div></div>
+    <div class="bar-row"><div class="bar-label">UMUX</div><div class="bar-track"><div class="bar-fill bar-umux" style="width:${avgUMUX}%">${avgUMUX.toFixed(1)}</div></div></div>
+  `;
+  dims.forEach(dim => {
+    const v = avg('ueq_' + dim);
+    const pct = ((v + 3) / 6 * 100).toFixed(0);
+    html += `<div class="bar-row"><div class="bar-label">UEQ ${dim.slice(0,6)}</div><div class="bar-track"><div class="bar-fill bar-ueq" style="width:${pct}%">${v.toFixed(2)}</div></div></div>`;
+  });
+  document.getElementById('bar-chart').innerHTML = html;
+}
+
+// ══ TABLES ════════════════════════════════════════════
+function renderRecentTable() {
+  const d = allData.slice(0, 10);
+  document.getElementById('recent-table').innerHTML = buildTable(d);
+}
+
+function renderFullTable() {
+  document.getElementById('full-table').innerHTML = buildTable(filteredData);
+  document.getElementById('st-data').textContent = `${filteredData.length} dari ${allData.length} responden`;
+}
+
+function buildTable(d) {
+  if (!d.length) return '<div class="empty-state"><div class="es-icon">📋</div><p>Tidak ada data yang sesuai filter.</p></div>';
+  return `<table class="data-table">
+    <thead><tr>
+      <th>#</th><th>Waktu</th><th>Nama</th><th>NIM</th><th>Kelas</th><th>Aplikasi</th>
+      <th>SUS</th><th>UMUX</th><th>UEQ Attr</th><th>UEQ Eff</th>
+    </tr></thead>
+    <tbody>${d.map((r,i) => `<tr>
+      <td style="color:var(--ink-muted);">${i+1}</td>
+      <td style="color:var(--ink-muted);font-size:11px;white-space:nowrap;">${new Date(r.timestamp).toLocaleDateString('id-ID')} ${new Date(r.timestamp).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td><strong>${r.nama}</strong></td>
+      <td><span style="font-family:var(--mono);font-size:12px;">${r.nim}</span></td>
+      <td>${r.kelas||'—'}</td>
+      <td>${r.aplikasi}</td>
+      <td><span class="pill ${susGrade(r.sus_score).cls}">${r.sus_score}</span></td>
+      <td>${r.umux_score}</td>
+      <td>${r.ueq_attractiveness?.toFixed?.(2)||'—'}</td>
+      <td>${r.ueq_efficiency?.toFixed?.(2)||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+// ══ FILTER ════════════════════════════════════════════
+function filterTable() {
+  const q = document.getElementById('filter-search').value.toLowerCase();
+  const kelas = document.getElementById('filter-kelas').value;
+  const sort = document.getElementById('filter-sort').value;
+
+  filteredData = allData.filter(r => {
+    const matchQ = !q || r.nama?.toLowerCase().includes(q) || r.nim?.toLowerCase().includes(q) || r.aplikasi?.toLowerCase().includes(q);
+    const matchK = !kelas || r.kelas === kelas;
+    return matchQ && matchK;
+  });
+
+  filteredData.sort((a, b) => {
+    if (sort === 'sus_desc') return b.sus_score - a.sus_score;
+    if (sort === 'sus_asc') return a.sus_score - b.sus_score;
+    if (sort === 'timestamp_asc') return new Date(a.timestamp) - new Date(b.timestamp);
+    return new Date(b.timestamp) - new Date(a.timestamp);
+  });
+
+  renderFullTable();
+}
+
+// ══ ANALISIS ══════════════════════════════════════════
+function renderAnalisis() {
+  const d = allData;
+  if (!d.length) {
+    document.getElementById('analisis-content').innerHTML = '<div class="empty-state"><div class="es-icon">📊</div><p>Belum ada data untuk dianalisis.</p></div>';
+    return;
+  }
+
+  const dims = ['attractiveness','perspicuity','efficiency','dependability','stimulation','novelty'];
+  const avg = (key) => d.reduce((s,r) => s + (r[key]||0), 0) / d.length;
+
+  // Distribusi SUS
+  const bands = [{l:'<52',min:0,max:52,cls:'pill-red'},{l:'52-72',min:52,max:72,cls:'pill-amber'},{l:'72-85',min:72,max:85,cls:'pill-blue'},{l:'>85',min:85,max:101,cls:'pill-green'}];
+  const susDistHtml = bands.map(b => {
+    const cnt = d.filter(r => r.sus_score >= b.min && r.sus_score < b.max).length;
+    const pct = (cnt/d.length*100).toFixed(0);
+    return `<div class="bar-row">
+      <div class="bar-label"><span class="pill ${b.cls}">${b.l}</span></div>
+      <div class="bar-track"><div class="bar-fill bar-sus" style="width:${pct}%">${cnt} (${pct}%)</div></div>
+    </div>`;
+  }).join('');
+
+  // UEQ profile
+  const ueqHtml = dims.map(dim => {
+    const v = avg('ueq_' + dim);
+    const pct = ((v+3)/6*100).toFixed(0);
+    const label = v > 0.8 ? 'Excellent' : v > 0.5 ? 'Good' : v > -0.5 ? 'Neutral' : v > -0.8 ? 'Bad' : 'Terrible';
+    return `<div class="bar-row">
+      <div class="bar-label">${dim.slice(0,1).toUpperCase()+dim.slice(1,7)}</div>
+      <div class="bar-track"><div class="bar-fill bar-ueq" style="width:${pct}%">${v.toFixed(2)} — ${label}</div></div>
+    </div>`;
+  }).join('');
+
+  // Per aplikasi
+  const apps = [...new Set(d.map(r => r.aplikasi))];
+  const appRows = apps.map(app => {
+    const rows = d.filter(r => r.aplikasi === app);
+    const avgSUS = (rows.reduce((s,r)=>s+r.sus_score,0)/rows.length).toFixed(1);
+    const avgUMUX = (rows.reduce((s,r)=>s+r.umux_score,0)/rows.length).toFixed(1);
+    const grade = susGrade(avgSUS);
+    return `<tr>
+      <td><strong>${app}</strong></td>
+      <td>${rows.length}</td>
+      <td><span class="pill ${grade.cls}">${avgSUS}</span></td>
+      <td>${avgUMUX}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('analisis-content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><span class="card-title">Distribusi Skor SUS</span></div>
+      ${susDistHtml}
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Profil UEQ Rata-rata Kelas</span></div>
+      ${ueqHtml}
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Perbandingan per Aplikasi</span></div>
+      <div class="table-wrap"><table class="data-table">
+        <thead><tr><th>Aplikasi</th><th>Responden</th><th>Avg SUS</th><th>Avg UMUX</th></tr></thead>
+        <tbody>${appRows}</tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+// ══ EXPORT ════════════════════════════════════════════
+function exportCSV() {
+  const d = filteredData;
+  if (!d.length) { alert('Tidak ada data untuk diekspor.'); return; }
+  const dims = ['attractiveness','perspicuity','efficiency','dependability','stimulation','novelty'];
+  const header = ['No','Timestamp','Nama','NIM','Kelas','Aplikasi','Pengalaman','SUS','UMUX',...dims.map(d=>'UEQ_'+d)].join(',');
+  const rows = d.map((r,i) => [
+    i+1, r.timestamp, `"${r.nama}"`, r.nim, r.kelas||'', `"${r.aplikasi}"`, r.pengalaman||'',
+    r.sus_score, r.umux_score, ...dims.map(dim => (r['ueq_'+dim]||0).toFixed(2))
+  ].join(','));
+  const csv = '\uFEFF' + [header, ...rows].join('\n'); // BOM untuk Excel
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'data_ux_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(filteredData, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'data_ux_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+}
+
+async function confirmClear() {
+  if (!confirm('PERHATIAN: Ini akan menghapus SEMUA data dari server. Tindakan tidak dapat dibatalkan.\n\nLanjutkan?')) return;
+  if (!confirm('Yakin? Ekspor CSV dahulu sebelum menghapus!')) return;
+  if (!sb || SUPABASE_URL === 'GANTI_DENGAN_URL_SUPABASE_ANDA') { alert('Mode demo — tidak ada data yang dihapus.'); return; }
+  try {
+    await sb.from('responses').delete().neq('id', 0);
+    alert('Semua data berhasil dihapus.');
+    loadData();
+  } catch(e) { alert('Gagal menghapus: ' + e.message); }
+}
+
+// ══ HELPERS ═══════════════════════════════════════════
+function susGrade(s) {
+  s = parseFloat(s);
+  if (s >= 85) return { label: 'Excellent', cls: 'pill-green' };
+  if (s >= 72) return { label: 'Good', cls: 'pill-blue' };
+  if (s >= 52) return { label: 'OK', cls: 'pill-amber' };
+  return { label: 'Poor', cls: 'pill-red' };
+}
+
+function getDemoData() {
+  const apps = ['Tokopedia','Gojek','Shopee','Instagram','WhatsApp'];
+  const names = ['Andi Pratama','Budi Santoso','Citra Dewi','Dian Rahayu','Eko Wahyudi','Fitri Lestari','Gilang Putra'];
+  return Array.from({length:15}, (_, i) => ({
+    id: i+1,
+    timestamp: new Date(Date.now() - i*3600000).toISOString(),
+    nama: names[i % names.length],
+    nim: '21' + String(i+1).padStart(6,'0'),
+    kelas: ['A','B','C'][i%3],
+    aplikasi: apps[i%apps.length],
+    pengalaman: 'sering',
+    sus_score: 60 + Math.floor(Math.random()*30),
+    umux_score: 55 + Math.floor(Math.random()*35),
+    ueq_attractiveness: +(Math.random()*2-0.5).toFixed(2),
+    ueq_perspicuity: +(Math.random()*2-0.5).toFixed(2),
+    ueq_efficiency: +(Math.random()*2-0.5).toFixed(2),
+    ueq_dependability: +(Math.random()*2-0.5).toFixed(2),
+    ueq_stimulation: +(Math.random()*2-0.5).toFixed(2),
+    ueq_novelty: +(Math.random()*2-0.5).toFixed(2),
+  }));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEY CyberLab — Pengujian UX Berbasis User</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- SUPABASE SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --ink: #1a1714;
+  --ink-soft: #4a4540;
+  --ink-muted: #8a837a;
+  --paper: #faf8f5;
+  --paper-warm: #f3efe8;
+  --paper-card: #ffffff;
+  --accent: #c84b2f;
+  --accent-light: #f5e8e4;
+  --accent-dark: #8f3220;
+  --blue: #2563a8;
+  --blue-light: #e8f0fb;
+  --green: #1a7a4a;
+  --green-light: #e4f5ec;
+  --purple: #5b3fa0;
+  --purple-light: #eeebf8;
+  --amber: #b45309;
+  --amber-light: #fef3e2;
+  --border: rgba(26,23,20,0.1);
+  --border-md: rgba(26,23,20,0.18);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --serif: 'DM Serif Display', Georgia, serif;
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
+  --shadow: 0 2px 12px rgba(26,23,20,0.08), 0 1px 3px rgba(26,23,20,0.06);
+  --shadow-lg: 0 8px 32px rgba(26,23,20,0.12), 0 2px 8px rgba(26,23,20,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--paper); color: var(--ink); font-size: 15px; line-height: 1.7; min-height: 100vh; }
+
+/* NAV */
+.top-nav { background: var(--ink); color: var(--paper); padding: 0 2rem; display: flex; align-items: center; height: 52px; position: sticky; top: 0; z-index: 100; gap: 0; }
+.nav-brand { font-family: var(--serif); font-size: 15px; color: var(--paper); margin-right: auto; }
+.nav-brand span { color: #e8a090; }
+.nav-tabs { display: flex; height: 100%; }
+.nav-tab { font-family: var(--sans); font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(250,248,245,0.55); border: none; background: none; padding: 0 18px; height: 100%; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; }
+.nav-tab:hover { color: rgba(250,248,245,0.85); }
+.nav-tab.active { color: #e8a090; border-bottom-color: #e8a090; }
+
+/* MAIN */
+.main { max-width: 900px; margin: 0 auto; padding: 3rem 2rem; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* HERO */
+.hero { background: var(--ink); border-radius: var(--radius); padding: 3.5rem 3rem; margin-bottom: 2.5rem; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -60px; right: -60px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(200,75,47,0.25) 0%, transparent 70%); }
+.hero-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #e8a090; border: 1px solid rgba(232,160,144,0.35); padding: 4px 12px; border-radius: 100px; margin-bottom: 1.25rem; }
+.hero h1 { font-family: var(--serif); font-size: 2.75rem; color: var(--paper); line-height: 1.15; margin-bottom: 1rem; }
+.hero h1 em { color: #e8a090; font-style: italic; }
+.hero p { color: rgba(250,248,245,0.65); font-size: 15px; max-width: 520px; line-height: 1.7; }
+.hero-meta { margin-top: 2rem; display: flex; gap: 2rem; flex-wrap: wrap; }
+.hero-stat { color: rgba(250,248,245,0.5); font-size: 12px; }
+.hero-stat strong { display: block; font-size: 18px; font-weight: 500; color: var(--paper); }
+
+/* SECTION */
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+.section-title { font-family: var(--serif); font-size: 1.9rem; line-height: 1.2; color: var(--ink); margin-bottom: 0.75rem; }
+.section-desc { color: var(--ink-soft); font-size: 14px; line-height: 1.65; margin-bottom: 2rem; }
+
+/* CARDS */
+.card { background: var(--paper-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
+.card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.card-accent-top { border-top: 3px solid var(--accent); }
+.card-accent-blue { border-top: 3px solid var(--blue); }
+.card-accent-green { border-top: 3px solid var(--green); }
+.card-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 17px; margin-bottom: 0.75rem; }
+.card-icon.red { background: var(--accent-light); }
+.card-icon.blue { background: var(--blue-light); }
+.card-icon.green { background: var(--green-light); }
+.card h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+.card p { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+
+/* TIMELINE */
+.timeline { position: relative; padding-left: 2rem; margin-bottom: 2rem; }
+.timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 1px; background: var(--border-md); }
+.timeline-item { position: relative; margin-bottom: 1.75rem; }
+.timeline-dot { position: absolute; left: -26px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--paper); box-shadow: 0 0 0 1px var(--accent); }
+.timeline-week { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.timeline-title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.timeline-desc { font-size: 13px; color: var(--ink-soft); }
+
+/* THEORY */
+.theory-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.theory-tab { padding: 7px 16px; border-radius: 100px; border: 1px solid var(--border-md); background: transparent; font-size: 13px; font-weight: 500; color: var(--ink-soft); cursor: pointer; transition: all 0.15s; font-family: var(--sans); }
+.theory-tab:hover { background: var(--paper-warm); }
+.theory-tab.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.theory-panel { display: none; }
+.theory-panel.active { display: block; }
+
+/* TABLE */
+.dim-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dim-table th { text-align: left; padding: 10px 14px; background: var(--paper-warm); color: var(--ink-soft); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.dim-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--ink); }
+.dim-table tr:last-child td { border-bottom: none; }
+.dim-table tr:hover td { background: var(--paper-warm); }
+.pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; }
+.pill-red { background: var(--accent-light); color: var(--accent-dark); }
+.pill-blue { background: var(--blue-light); color: var(--blue); }
+.pill-green { background: var(--green-light); color: var(--green); }
+.pill-purple { background: var(--purple-light); color: var(--purple); }
+.pill-amber { background: var(--amber-light); color: var(--amber); }
+
+/* FORMULA */
+.formula-box { background: var(--ink); border-radius: var(--radius-sm); padding: 1.25rem 1.5rem; margin: 1rem 0; font-family: var(--mono); font-size: 13px; color: #e8a090; line-height: 1.8; }
+.formula-box .comment { color: rgba(250,248,245,0.35); font-style: italic; }
+
+/* CALLOUT */
+.callout { border-left: 3px solid; padding: 0.75rem 1rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 13px; margin: 1rem 0; }
+.callout-tip { border-color: var(--green); background: var(--green-light); color: #0f5c36; }
+.callout-note { border-color: var(--blue); background: var(--blue-light); color: #1a4a80; }
+.callout-warn { border-color: var(--amber); background: var(--amber-light); color: #7a3a06; }
+.callout strong { font-weight: 600; }
+
+/* QUESTIONNAIRE */
+.q-header { background: var(--ink); border-radius: var(--radius) var(--radius) 0 0; padding: 2rem 2rem 1.5rem; color: var(--paper); }
+.q-header h2 { font-family: var(--serif); font-size: 1.6rem; margin-bottom: 0.5rem; }
+.q-header p { font-size: 13px; color: rgba(250,248,245,0.6); }
+.q-body { background: var(--paper-card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); padding: 1.75rem 2rem; margin-bottom: 2rem; box-shadow: var(--shadow); }
+.q-step { display: none; }
+.q-step.active { display: block; }
+.q-section-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { font-size: 13px; font-weight: 500; color: var(--ink); display: block; margin-bottom: 6px; }
+.form-label span { color: var(--accent); }
+.form-input, .form-select { width: 100%; padding: 9px 13px; border: 1px solid var(--border-md); border-radius: var(--radius-sm); font-family: var(--sans); font-size: 14px; color: var(--ink); background: var(--paper); transition: border-color 0.15s; outline: none; }
+.form-input:focus, .form-select:focus { border-color: var(--accent); }
+
+/* LIKERT */
+.likert-row { margin-bottom: 1.5rem; }
+.likert-question { font-size: 14px; color: var(--ink); margin-bottom: 10px; line-height: 1.5; }
+.likert-scale { display: flex; }
+.likert-opt { flex: 1; }
+.likert-opt input[type="radio"] { display: none; }
+.likert-opt label { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px; cursor: pointer; border-radius: var(--radius-sm); transition: background 0.12s; }
+.likert-opt label:hover .likert-circle { border-color: var(--accent); }
+.likert-circle { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border-md); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--ink-soft); background: var(--paper); transition: all 0.12s; }
+.likert-opt input:checked + label .likert-circle { background: var(--accent); border-color: var(--accent); color: white; }
+.likert-opt input:checked + label { background: var(--accent-light); border-radius: var(--radius-sm); }
+.likert-scale-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-muted); margin-top: 4px; }
+
+/* SEMANTIC */
+.semantic-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; font-size: 13px; }
+.semantic-left { width: 120px; text-align: right; color: var(--ink-soft); flex-shrink: 0; }
+.semantic-right { width: 120px; color: var(--ink-soft); flex-shrink: 0; }
+.semantic-scale { display: flex; gap: 4px; flex: 1; justify-content: center; }
+.semantic-dot { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--border-md); background: var(--paper); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--ink-muted); transition: all 0.12s; }
+.semantic-dot:hover { border-color: var(--purple); }
+.semantic-dot.selected { background: var(--purple); border-color: var(--purple); color: white; }
+
+/* PROGRESS */
+.progress-bar-wrap { background: rgba(26,23,20,0.08); border-radius: 100px; height: 4px; margin-bottom: 1.25rem; }
+.progress-bar-fill { height: 100%; border-radius: 100px; background: var(--accent); transition: width 0.3s ease; }
+
+/* BUTTONS */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; border-radius: var(--radius-sm); border: none; font-family: var(--sans); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-ghost { background: transparent; border: 1px solid var(--border-md); color: var(--ink-soft); }
+.btn-ghost:hover { background: var(--paper-warm); border-color: var(--ink); color: var(--ink); }
+.btn-green { background: var(--green); color: white; }
+.btn-green:hover { background: #145c38; }
+.nav-actions { display: flex; justify-content: space-between; margin-top: 1.5rem; }
+
+/* RESULT */
+.result-card { background: var(--ink); color: var(--paper); border-radius: var(--radius); padding: 2rem; text-align: center; margin-bottom: 1.25rem; }
+.result-card h3 { font-family: var(--serif); font-size: 1.4rem; margin-bottom: 0.5rem; color: #e8a090; }
+.result-score { font-family: var(--serif); font-size: 4rem; font-weight: 400; color: var(--paper); line-height: 1; margin: 1rem 0; }
+.result-grade { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 14px; border-radius: 100px; display: inline-block; margin-bottom: 1rem; }
+.grade-excellent { background: var(--green-light); color: var(--green); }
+.grade-good { background: var(--blue-light); color: var(--blue); }
+.grade-ok { background: var(--amber-light); color: var(--amber); }
+.grade-poor { background: var(--accent-light); color: var(--accent-dark); }
+.score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.score-item { background: rgba(250,248,245,0.06); border-radius: var(--radius-sm); padding: 1rem; text-align: center; }
+.score-item .val { font-family: var(--serif); font-size: 2rem; color: var(--paper); }
+.score-item .lbl { font-size: 11px; color: rgba(250,248,245,0.5); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+.ueq-bar-wrap { margin-bottom: 1rem; }
+.ueq-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-soft); margin-bottom: 4px; }
+.ueq-bar-track { height: 8px; background: var(--paper-warm); border-radius: 100px; position: relative; }
+.ueq-mid-line { position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--border-md); }
+
+/* SUBMIT STATUS */
+.submit-status { padding: 1rem; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; margin-top: 1rem; text-align: center; }
+.status-sending { background: var(--amber-light); color: var(--amber); }
+.status-ok { background: var(--green-light); color: var(--green); }
+.status-err { background: var(--accent-light); color: var(--accent-dark); }
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .hero { padding: 2rem 1.5rem; }
+  .hero h1 { font-size: 2rem; }
+  .main { padding: 2rem 1rem; }
+  .semantic-left, .semantic-right { width: 70px; font-size: 11px; }
+  .q-body { padding: 1.25rem 1rem; }
+  .nav-tab { padding: 0 10px; font-size: 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ SUPABASE CONFIG ══════════════════════════════════
+  GANTI dua nilai di bawah ini dengan milik Anda dari Supabase!
+  Lihat panduan setup.html untuk instruksi lengkap.
+═══════════════════════════════════════════════════════ -->
+<script>
+const SUPABASE_URL = 'GANTI_DENGAN_URL_SUPABASE_ANDA';
+const SUPABASE_KEY = 'GANTI_DENGAN_ANON_KEY_SUPABASE_ANDA';
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+</script>
+
+<nav class="top-nav">
+  <div class="nav-brand">MEY <span>CyberLab</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('modul')">Modul</button>
+    <button class="nav-tab" onclick="showPage('teori')">Teori</button>
+    <button class="nav-tab" onclick="showPage('praktik')">Praktik</button>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ══ PAGE 1: MODUL ══════════════════════════════════ -->
+<div id="page-modul" class="page active">
+  <div class="hero">
+    <div class="hero-tag">MEY CyberLab · Pengujian Aplikasi Multimedia · Sarjana Terapan</div>
+    <h1>Pengujian UX<br><em>Berbasis User</em></h1>
+    <p>Modul praktikum interaktif untuk memahami, menerapkan, dan menganalisis kuesioner evaluasi pengalaman pengguna: SUS, UEQ, dan UMUX.</p>
+    <div class="hero-meta">
+      <div class="hero-stat"><strong>3</strong> Instrumen</div>
+      <div class="hero-stat"><strong>5</strong> Pertemuan</div>
+      <div class="hero-stat"><strong>2 SKS</strong> Praktik</div>
+    </div>
+  </div>
+
+  <div class="section-label">Peta Pembelajaran</div>
+  <div class="section-title">Struktur Perkuliahan</div>
+  <p class="section-desc">Lima pertemuan terstruktur dari fondasi teori hingga analisis data.</p>
+  <div class="timeline">
+    <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-week">Pertemuan 1</div><div class="timeline-title">Fondasi: Apa itu User Testing?</div><div class="timeline-desc">Perbedaan UX vs Usability, pendekatan kuantitatif vs kualitatif, pengenalan tiga instrumen utama.</div></div>
+    <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-week">Pertemuan 2</div><div class="timeline-title">SUS — System Usability Scale</div><div class="timeline-desc">Sejarah & validitas, 10 item pernyataan, cara skoring, interpretasi benchmark, latihan pengisian langsung.</div></div>
+    <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-week">Pertemuan 3</div><div class="timeline-title">UEQ — User Experience Questionnaire</div><div class="timeline-desc">Skala semantik diferensial, 6 dimensi UEQ, cara membaca profil UX, analisis dengan UEQ Data Analysis Tool.</div></div>
+    <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-week">Pertemuan 4</div><div class="timeline-title">UMUX — Usability Metric for UX</div><div class="timeline-desc">Keunggulan efisiensi, 4 item, rumus konversi ke skor 0–100, perbandingan dengan SUS.</div></div>
+    <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-week">Pertemuan 5</div><div class="timeline-title">Praktikum Terpadu & Analisis Data</div><div class="timeline-desc">Mahasiswa menguji aplikasi nyata, data dikumpulkan, analisis komparatif tiga instrumen, dan diskusi temuan.</div></div>
+  </div>
+
+  <div class="section-label">Tujuan Pembelajaran</div>
+  <div class="card-grid">
+    <div class="card card-accent-top"><div class="card-icon red">🎯</div><h3>Kognitif</h3><p>Mampu menjelaskan perbedaan konseptual, validitas, dan reliabilitas SUS, UEQ, dan UMUX beserta konteks penggunaannya.</p></div>
+    <div class="card card-accent-blue"><div class="card-icon blue">🛠</div><h3>Psikomotorik</h3><p>Mampu merancang skenario pengujian, mengadministrasi kuesioner, menghitung skor, dan menginterpretasikan hasilnya.</p></div>
+    <div class="card card-accent-green"><div class="card-icon green">📊</div><h3>Afektif</h3><p>Menghargai pentingnya data empiris dalam desain berbasis pengguna dan mampu berkontribusi dalam penelitian UX.</p></div>
+  </div>
+</div>
+
+<!-- ══ PAGE 2: TEORI ══════════════════════════════════ -->
+<div id="page-teori" class="page">
+  <div class="section-label">Materi Teori</div>
+  <div class="section-title">Tiga Instrumen Pengujian UX</div>
+  <p class="section-desc">Klik instrumen di bawah untuk mempelajari teori, rumus, dan contoh penerapannya.</p>
+  <div class="theory-tabs">
+    <button class="theory-tab active" onclick="showTheory('sus')">SUS</button>
+    <button class="theory-tab" onclick="showTheory('ueq')">UEQ</button>
+    <button class="theory-tab" onclick="showTheory('umux')">UMUX</button>
+    <button class="theory-tab" onclick="showTheory('compare')">Komparasi</button>
+  </div>
+
+  <div id="theory-sus" class="theory-panel active">
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;">
+        <div><div class="section-label" style="margin-bottom:4px;">System Usability Scale</div><div style="font-family:var(--serif);font-size:1.4rem;">SUS — Brooke, 1986</div></div>
+        <span class="pill pill-blue" style="font-size:12px;padding:4px 12px;">10 Item · Likert 1–5 · Skor 0–100</span>
+      </div>
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:1.25rem;">SUS adalah kuesioner usabilitas paling populer di dunia, dikembangkan oleh John Brooke di Digital Equipment Corporation. Sangat valid dan kini menjadi <em>gold standard</em> industri.</p>
+      <div class="section-label">10 Item Pernyataan SUS</div>
+      <table class="dim-table" style="margin-bottom:1.25rem;">
+        <thead><tr><th>#</th><th>Pernyataan</th><th>Tipe</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Saya rasa saya akan sering menggunakan sistem ini</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>2</td><td>Sistem ini terlalu rumit tanpa perlu</td><td><span class="pill pill-red">Negatif</span></td></tr>
+          <tr><td>3</td><td>Sistem ini mudah digunakan</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>4</td><td>Saya butuh bantuan orang teknis untuk menggunakan sistem ini</td><td><span class="pill pill-red">Negatif</span></td></tr>
+          <tr><td>5</td><td>Berbagai fungsi sistem ini terintegrasi dengan baik</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>6</td><td>Ada terlalu banyak ketidakkonsistenan dalam sistem ini</td><td><span class="pill pill-red">Negatif</span></td></tr>
+          <tr><td>7</td><td>Kebanyakan orang akan belajar menggunakan sistem ini dengan cepat</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>8</td><td>Sistem ini sangat tidak nyaman digunakan</td><td><span class="pill pill-red">Negatif</span></td></tr>
+          <tr><td>9</td><td>Saya merasa sangat yakin menggunakan sistem ini</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>10</td><td>Saya perlu banyak belajar sebelum bisa menggunakan sistem ini</td><td><span class="pill pill-red">Negatif</span></td></tr>
+        </tbody>
+      </table>
+      <div class="section-label">Rumus Perhitungan</div>
+      <div class="formula-box">
+<span class="comment">// Item ganjil (1,3,5,7,9) → kontribusi positif</span>
+kontribusi_ganjil = nilai_responden - 1
+
+<span class="comment">// Item genap (2,4,6,8,10) → kontribusi negatif (dibalik)</span>
+kontribusi_genap  = 5 - nilai_responden
+
+<span class="comment">// Total semua kontribusi × 2.5 → skor 0–100</span>
+SUS_score = (Σ semua kontribusi) × 2.5
+      </div>
+      <div class="section-label">Interpretasi Skor</div>
+      <table class="dim-table">
+        <thead><tr><th>Skor</th><th>Grade</th><th>Adjektif</th><th>Penerimaan</th></tr></thead>
+        <tbody>
+          <tr><td>≥ 85.5</td><td><span class="pill pill-green">A</span></td><td>Excellent</td><td>Diterima</td></tr>
+          <tr><td>72.5 – 85.4</td><td><span class="pill pill-blue">B</span></td><td>Good</td><td>Diterima</td></tr>
+          <tr><td>52 – 72.4</td><td><span class="pill pill-amber">C/D</span></td><td>OK / Poor</td><td>Marginal</td></tr>
+          <tr><td>&lt; 52</td><td><span class="pill pill-red">F</span></td><td>Awful</td><td>Ditolak</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip" style="margin-top:1rem;"><strong>Benchmark Industri:</strong> Rata-rata SUS dari 500+ studi adalah <strong>68</strong>. Skor di atas 68 dianggap di atas rata-rata.</div>
+    </div>
+  </div>
+
+  <div id="theory-ueq" class="theory-panel">
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;">
+        <div><div class="section-label" style="margin-bottom:4px;">User Experience Questionnaire</div><div style="font-family:var(--serif);font-size:1.4rem;">UEQ — Laugwitz et al., 2008</div></div>
+        <span class="pill pill-purple" style="font-size:12px;padding:4px 12px;">26 Item · Semantik −3 s/d +3 · 6 Dimensi</span>
+      </div>
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:1.25rem;">UEQ mengukur pengalaman pengguna secara <em>holistik</em> — tidak hanya usabilitas, tapi juga aspek hedonik seperti stimulasi dan inovasi. Menggunakan format <strong>semantik diferensial</strong>.</p>
+      <div class="section-label">6 Dimensi UEQ</div>
+      <table class="dim-table" style="margin-bottom:1.25rem;">
+        <thead><tr><th>Dimensi</th><th>Aspek</th><th>Contoh Pasangan Kata</th><th>Item</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Attractiveness</strong></td><td>Pragmatik + Hedonik</td><td>jelek ↔ cantik</td><td>6</td></tr>
+          <tr><td><strong>Perspicuity</strong></td><td>Pragmatik</td><td>rumit ↔ mudah</td><td>4</td></tr>
+          <tr><td><strong>Efficiency</strong></td><td>Pragmatik</td><td>lambat ↔ cepat</td><td>4</td></tr>
+          <tr><td><strong>Dependability</strong></td><td>Pragmatik</td><td>tidak dapat diprediksi ↔ dapat diprediksi</td><td>4</td></tr>
+          <tr><td><strong>Stimulation</strong></td><td>Hedonik</td><td>membosankan ↔ menarik</td><td>4</td></tr>
+          <tr><td><strong>Novelty</strong></td><td>Hedonik</td><td>konvensional ↔ inovatif</td><td>4</td></tr>
+        </tbody>
+      </table>
+      <div class="formula-box">
+<span class="comment">// Setiap item dinilai 1–7 (dikonversi ke −3 s/d +3)</span>
+item_score = nilai_asli - 4
+
+<span class="comment">// Skor dimensi = rata-rata item dalam dimensi tersebut</span>
+dimensi_score = mean(item_scores_dalam_dimensi)
+
+<span class="comment">// Interpretasi: > 0.8 Excellent | 0.5–0.8 Good | -0.5–0.5 Neutral | &lt;-0.8 Terrible</span>
+      </div>
+      <div class="callout callout-note"><strong>UEQ vs SUS:</strong> Gunakan UEQ ketika ingin mendiagnosis <em>mengapa</em> UX bermasalah — apakah karena susah dipelajari, lambat, atau tidak inovatif.</div>
+    </div>
+  </div>
+
+  <div id="theory-umux" class="theory-panel">
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;">
+        <div><div class="section-label" style="margin-bottom:4px;">Usability Metric for User Experience</div><div style="font-family:var(--serif);font-size:1.4rem;">UMUX — Finstad, 2010</div></div>
+        <span class="pill pill-green" style="font-size:12px;padding:4px 12px;">4 Item · Likert 1–7 · Skor 0–100</span>
+      </div>
+      <p style="font-size:14px;color:var(--ink-soft);margin-bottom:1.25rem;">UMUX dirancang sebagai alternatif ringkas SUS yang berkorelasi tinggi (r > 0.8) namun hanya butuh 4 item. Sangat ideal untuk survei berkala atau pengujian A/B.</p>
+      <table class="dim-table" style="margin-bottom:1.25rem;">
+        <thead><tr><th>#</th><th>Pernyataan</th><th>Tipe</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Kemampuan sistem ini memenuhi kebutuhan saya.</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>2</td><td>Menggunakan sistem ini terasa frustasi.</td><td><span class="pill pill-red">Negatif</span></td></tr>
+          <tr><td>3</td><td>Sistem ini mudah digunakan.</td><td><span class="pill pill-green">Positif</span></td></tr>
+          <tr><td>4</td><td>Saya harus membuang banyak waktu untuk memperbaiki masalah pada sistem ini.</td><td><span class="pill pill-red">Negatif</span></td></tr>
+        </tbody>
+      </table>
+      <div class="formula-box">
+<span class="comment">// Item negatif dibalik terlebih dahulu</span>
+item_neg_reversed = 8 - nilai_asli
+
+<span class="comment">// Jumlahkan semua 4 item (setelah pembalikan)</span>
+raw_sum = item1 + (8 - item2) + item3 + (8 - item4)
+
+<span class="comment">// Konversi ke skala 0–100</span>
+UMUX_score = ((raw_sum - 4) / 24) × 100
+      </div>
+    </div>
+  </div>
+
+  <div id="theory-compare" class="theory-panel">
+    <div class="card">
+      <div class="section-label">Tabel Komparasi Lengkap</div>
+      <table class="dim-table">
+        <thead><tr><th>Aspek</th><th>SUS</th><th>UEQ</th><th>UMUX</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Jumlah Item</strong></td><td>10</td><td>26</td><td>4</td></tr>
+          <tr><td><strong>Format Skala</strong></td><td>Likert 1–5</td><td>Semantik −3 s/d +3</td><td>Likert 1–7</td></tr>
+          <tr><td><strong>Waktu Pengisian</strong></td><td>~2 menit</td><td>~5–7 menit</td><td>~1 menit</td></tr>
+          <tr><td><strong>Output</strong></td><td>1 skor (0–100)</td><td>6 skor dimensi</td><td>1 skor (0–100)</td></tr>
+          <tr><td><strong>Fokus Utama</strong></td><td>Usabilitas</td><td>UX Holistik</td><td>Usabilitas ringkas</td></tr>
+          <tr><td><strong>Benchmark</strong></td><td>Sangat luas (500+ studi)</td><td>Tersedia (dataset resmi)</td><td>Terbatas</td></tr>
+          <tr><td><strong>Cocok untuk</strong></td><td>Evaluasi umum, komparatif</td><td>Diagnosis mendalam, penelitian</td><td>Survei cepat, A/B testing</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip" style="margin-top:1.25rem;"><strong>Panduan Memilih:</strong> Penelitian setingkat sarjana (proyek akhir/ skripsi/ dsj) → gabungkan SUS + UEQ untuk triangulasi. Survei cepat / proyek praktis yang terbatas → UMUX. Diagnosis mendalam → UEQ saja sudah cukup.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE 3: PRAKTIK ════════════════════════════════ -->
+<div id="page-praktik" class="page">
+  <div class="section-label">Lembar Kerja Mahasiswa</div>
+  <div class="section-title">Kuesioner Pengujian UX</div>
+  <p class="section-desc">Isi formulir ini setelah mencoba aplikasi yang ditentukan. Data Anda akan langsung terkirim ke server dosen.</p>
+
+  <div class="q-header">
+    <h2>Formulir Evaluasi UX</h2>
+    <p>Pastikan Anda telah menggunakan aplikasi yang diuji minimal 10 menit sebelum mengisi kuesioner ini.</p>
+    <div style="margin-top:1rem;">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="q-progress" style="width:20%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(250,248,245,0.45);">
+        <span>Identitas</span><span>SUS</span><span>UEQ</span><span>UMUX</span><span>Selesai</span>
+      </div>
+    </div>
+  </div>
+  <div class="q-body">
+
+    <!-- STEP 1: IDENTITAS -->
+    <div id="q-step-1" class="q-step active">
+      <div class="q-section-title">Langkah 1 dari 4 — Identitas &amp; Aplikasi yang Diuji</div>
+      <div class="form-group">
+        <label class="form-label">Nama Lengkap <span>*</span></label>
+        <input type="text" id="f-nama" class="form-input" placeholder="Nama sesuai KTM">
+      </div>
+      <div class="form-group">
+        <label class="form-label">NIM <span>*</span></label>
+        <input type="text" id="f-nim" class="form-input" placeholder="Nomor Induk Mahasiswa">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kelas</label>
+        <select id="f-kelas" class="form-select">
+          <option value="">— Pilih Kelas —</option>
+          <option>A</option><option>B</option><option>C</option><option>D</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Aplikasi yang Diuji <span>*</span></label>
+        <input type="text" id="f-app" class="form-input" placeholder="Nama aplikasi (cth: Tokopedia, Gojek, dll)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pengalaman Menggunakan Aplikasi</label>
+        <select id="f-exp" class="form-select">
+          <option value="">— Pilih —</option>
+          <option value="pertama">Baru pertama kali</option>
+          <option value="jarang">Jarang (< 5 kali)</option>
+          <option value="kadang">Kadang-kadang</option>
+          <option value="sering">Sering</option>
+          <option value="sangat_sering">Sangat sering (pengguna harian)</option>
+        </select>
+      </div>
+      <div class="nav-actions">
+        <div></div>
+        <button class="btn btn-primary" onclick="goStep(2)">Lanjut ke SUS →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: SUS -->
+    <div id="q-step-2" class="q-step">
+      <div class="q-section-title">Langkah 2 dari 4 — System Usability Scale (SUS)</div>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:1.25rem;">Berikan penilaian 1 (Sangat Tidak Setuju) hingga 5 (Sangat Setuju) untuk setiap pernyataan berikut tentang aplikasi yang Anda uji.</p>
+      <div id="sus-form"></div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="goStep(1)">← Kembali</button>
+        <button class="btn btn-primary" onclick="goStep(3)">Lanjut ke UEQ →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: UEQ -->
+    <div id="q-step-3" class="q-step">
+      <div class="q-section-title">Langkah 3 dari 4 — User Experience Questionnaire (UEQ)</div>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:1.25rem;">Pilih posisi antara dua kata yang paling menggambarkan aplikasi yang Anda uji (1 = sangat cocok kiri, 7 = sangat cocok kanan).</p>
+      <div id="ueq-form"></div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="goStep(2)">← Kembali</button>
+        <button class="btn btn-primary" onclick="goStep(4)">Lanjut ke UMUX →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: UMUX -->
+    <div id="q-step-4" class="q-step">
+      <div class="q-section-title">Langkah 4 dari 4 — UMUX</div>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:1.25rem;">Berikan penilaian 1 (Sangat Tidak Setuju) hingga 7 (Sangat Setuju).</p>
+      <div id="umux-form"></div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" onclick="goStep(3)">← Kembali</button>
+        <button class="btn btn-green" onclick="submitForm()">✓ Kirim Data ke Server</button>
+      </div>
+      <div id="submit-status"></div>
+    </div>
+
+    <!-- STEP RESULT -->
+    <div id="q-step-result" class="q-step">
+      <div style="text-align:center;padding:1rem 0 2rem;">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎉</div>
+        <h3 style="font-family:var(--serif);font-size:1.6rem;margin-bottom:0.5rem;">Data Berhasil Dikirim!</h3>
+        <p style="color:var(--ink-soft);font-size:14px;">Jawaban Anda telah tersimpan di server dosen. Berikut ringkasan skor Anda:</p>
+      </div>
+
+      <div class="result-card">
+        <h3>Aplikasi: <span id="res-app-name"></span></h3>
+        <div class="result-score" id="res-sus-score"></div>
+        <div><span id="res-sus-grade" class="result-grade"></span></div>
+        <div id="res-breakdown" class="score-grid" style="margin-top:1.5rem;"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-label">Profil UEQ Anda</div>
+        <div id="res-ueq-profile"></div>
+      </div>
+
+      <div style="text-align:center;margin-top:1.5rem;">
+        <button class="btn btn-ghost" onclick="resetForm()">Isi Ulang / Aplikasi Baru</button>
+      </div>
+    </div>
+
+  </div><!-- /q-body -->
+</div><!-- /page-praktik -->
+
+</div><!-- /main -->
+
+<script>
+// ══ DATA ══════════════════════════════════════════════
+const SUS_ITEMS = [
+  { text: "Saya rasa saya akan sering menggunakan sistem ini.", odd: true },
+  { text: "Sistem ini terasa terlalu rumit tanpa perlu.", odd: false },
+  { text: "Sistem ini mudah digunakan.", odd: true },
+  { text: "Saya membutuhkan bantuan dari orang teknis untuk dapat menggunakan sistem ini.", odd: false },
+  { text: "Berbagai fungsi dalam sistem ini terintegrasi dengan baik.", odd: true },
+  { text: "Ada terlalu banyak ketidakkonsistenan dalam sistem ini.", odd: false },
+  { text: "Saya rasa kebanyakan orang akan belajar menggunakan sistem ini dengan cepat.", odd: true },
+  { text: "Sistem ini sangat tidak nyaman digunakan.", odd: false },
+  { text: "Saya merasa sangat yakin menggunakan sistem ini.", odd: true },
+  { text: "Saya perlu banyak belajar sebelum dapat menggunakan sistem ini.", odd: false }
+];
+
+const UEQ_ITEMS = [
+  { left: "mengganggu", right: "menyenangkan", dim: "attractiveness", rev: false },
+  { left: "tidak dapat dipahami", right: "dapat dipahami", dim: "perspicuity", rev: false },
+  { left: "kreatif", right: "monoton", dim: "novelty", rev: true },
+  { left: "mudah dipelajari", right: "sulit dipelajari", dim: "perspicuity", rev: true },
+  { left: "bermanfaat", right: "tidak bermanfaat", dim: "attractiveness", rev: true },
+  { left: "membosankan", right: "menarik", dim: "stimulation", rev: false },
+  { left: "tidak menarik", right: "mengagumkan", dim: "attractiveness", rev: false },
+  { left: "tidak dapat diprediksi", right: "dapat diprediksi", dim: "dependability", rev: false },
+  { left: "cepat", right: "lambat", dim: "efficiency", rev: true },
+  { left: "inovatif", right: "konvensional", dim: "novelty", rev: true },
+  { left: "menghambat", right: "mendukung", dim: "dependability", rev: false },
+  { left: "baik", right: "buruk", dim: "attractiveness", rev: true },
+  { left: "rumit", right: "mudah", dim: "perspicuity", rev: false },
+  { left: "tidak menyenangkan", right: "menyenangkan", dim: "attractiveness", rev: false },
+  { left: "biasa", right: "berdaya cipta", dim: "novelty", rev: false },
+  { left: "tidak nyaman", right: "nyaman", dim: "dependability", rev: false },
+  { left: "aman", right: "tidak aman", dim: "dependability", rev: true },
+  { left: "memotivasi", right: "tidak memotivasi", dim: "stimulation", rev: true },
+  { left: "memenuhi harapan", right: "tidak memenuhi harapan", dim: "stimulation", rev: true },
+  { left: "tidak efisien", right: "efisien", dim: "efficiency", rev: false },
+  { left: "jelas", right: "membingungkan", dim: "perspicuity", rev: true },
+  { left: "tidak praktis", right: "praktis", dim: "efficiency", rev: false },
+  { left: "terorganisir", right: "berantakan", dim: "efficiency", rev: true },
+  { left: "menarik", right: "tidak menarik", dim: "stimulation", rev: true },
+  { left: "ramah pengguna", right: "tidak ramah", dim: "stimulation", rev: true },
+  { left: "konservatif", right: "inovatif", dim: "novelty", rev: false }
+];
+
+const UMUX_ITEMS = [
+  { text: "Kemampuan sistem ini memenuhi kebutuhan saya.", pos: true },
+  { text: "Menggunakan sistem ini terasa frustasi.", pos: false },
+  { text: "Sistem ini mudah digunakan.", pos: true },
+  { text: "Saya harus membuang banyak waktu untuk memperbaiki masalah pada sistem ini.", pos: false }
+];
+
+let susAnswers = {}, ueqAnswers = {}, umuxAnswers = {};
+
+// ══ NAVIGATION ════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['modul','teori','praktik'][i] === name);
+  });
+}
+
+function showTheory(name) {
+  document.querySelectorAll('.theory-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('theory-' + name).classList.add('active');
+  document.querySelectorAll('.theory-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.toLowerCase() === name || (name === 'compare' && t.textContent === 'Komparasi'));
+  });
+}
+
+// ══ FORM RENDERING ════════════════════════════════════
+function renderSUS() {
+  const cont = document.getElementById('sus-form');
+  cont.innerHTML = '';
+  SUS_ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'likert-row';
+    row.innerHTML = `<div class="likert-question">${i+1}. ${item.text}</div>
+    <div class="likert-scale">${[1,2,3,4,5].map(v => `
+      <div class="likert-opt">
+        <input type="radio" name="sus${i}" id="sus${i}v${v}" value="${v}" ${susAnswers[i]===v?'checked':''} onchange="susAnswers[${i}]=${v}">
+        <label for="sus${i}v${v}"><div class="likert-circle">${v}</div></label>
+      </div>`).join('')}
+    </div>
+    <div class="likert-scale-label"><span>Sangat Tidak Setuju</span><span>Sangat Setuju</span></div>`;
+    cont.appendChild(row);
+  });
+}
+
+function renderUEQ() {
+  const cont = document.getElementById('ueq-form');
+  cont.innerHTML = '';
+  UEQ_ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'semantic-row';
+    const dots = [1,2,3,4,5,6,7].map(v => {
+      const sel = ueqAnswers[i] === v ? ' selected' : '';
+      return `<div class="semantic-dot${sel}" onclick="selectUEQ(${i},${v})" id="ueq${i}v${v}">${v}</div>`;
+    }).join('');
+    row.innerHTML = `<div class="semantic-left">${item.left}</div>
+      <div class="semantic-scale">${dots}</div>
+      <div class="semantic-right">${item.right}</div>`;
+    cont.appendChild(row);
+  });
+}
+
+function selectUEQ(i, v) {
+  ueqAnswers[i] = v;
+  document.querySelectorAll(`[id^="ueq${i}v"]`).forEach(el => el.classList.remove('selected'));
+  document.getElementById(`ueq${i}v${v}`).classList.add('selected');
+}
+
+function renderUMUX() {
+  const cont = document.getElementById('umux-form');
+  cont.innerHTML = '';
+  UMUX_ITEMS.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'likert-row';
+    row.innerHTML = `<div class="likert-question">${i+1}. ${item.text}</div>
+    <div class="likert-scale">${[1,2,3,4,5,6,7].map(v => `
+      <div class="likert-opt">
+        <input type="radio" name="umux${i}" id="umux${i}v${v}" value="${v}" ${umuxAnswers[i]===v?'checked':''} onchange="umuxAnswers[${i}]=${v}">
+        <label for="umux${i}v${v}"><div class="likert-circle">${v}</div></label>
+      </div>`).join('')}
+    </div>
+    <div class="likert-scale-label"><span>Sangat Tidak Setuju</span><span>Sangat Setuju</span></div>`;
+    cont.appendChild(row);
+  });
+}
+
+renderSUS(); renderUEQ(); renderUMUX();
+
+// ══ STEP NAVIGATION ═══════════════════════════════════
+function goStep(n) {
+  document.querySelectorAll('.q-step').forEach(s => s.classList.remove('active'));
+  const id = n === 'result' ? 'q-step-result' : 'q-step-' + n;
+  document.getElementById(id).classList.add('active');
+  if (typeof n === 'number') {
+    const pct = [20, 40, 65, 85][n - 1];
+    document.getElementById('q-progress').style.width = pct + '%';
+  }
+}
+
+// ══ SCORING ═══════════════════════════════════════════
+function calcSUS() {
+  let sum = 0;
+  SUS_ITEMS.forEach((item, i) => {
+    const v = susAnswers[i] || 3;
+    sum += item.odd ? (v - 1) : (5 - v);
+  });
+  return Math.round(sum * 2.5);
+}
+
+function calcUEQ() {
+  const dims = { attractiveness: [], perspicuity: [], efficiency: [], dependability: [], stimulation: [], novelty: [] };
+  UEQ_ITEMS.forEach((item, i) => {
+    let v = ueqAnswers[i] || 4;
+    v = item.rev ? (8 - v) : v;
+    dims[item.dim].push(v - 4);
+  });
+  const result = {};
+  for (const d in dims) result[d] = dims[d].length ? +(dims[d].reduce((a,b)=>a+b,0)/dims[d].length).toFixed(2) : 0;
+  return result;
+}
+
+function calcUMUX() {
+  let sum = 0;
+  UMUX_ITEMS.forEach((item, i) => {
+    const v = umuxAnswers[i] || 4;
+    sum += item.pos ? v : (8 - v);
+  });
+  return Math.round(((sum - 4) / 24) * 100);
+}
+
+function susGrade(s) {
+  if (s >= 85) return { label: 'Excellent', cls: 'grade-excellent' };
+  if (s >= 72) return { label: 'Good', cls: 'grade-good' };
+  if (s >= 52) return { label: 'OK', cls: 'grade-ok' };
+  return { label: 'Poor', cls: 'grade-poor' };
+}
+
+function ueqLabel(v) {
+  if (v > 0.8) return 'Excellent';
+  if (v > 0.5) return 'Good';
+  if (v > -0.5) return 'Neutral';
+  if (v > -0.8) return 'Bad';
+  return 'Terrible';
+}
+
+// ══ SUBMIT ════════════════════════════════════════════
+async function submitForm() {
+  const nama = document.getElementById('f-nama').value.trim();
+  const nim = document.getElementById('f-nim').value.trim();
+  const app = document.getElementById('f-app').value.trim();
+  if (!nama || !nim || !app) { alert('Harap isi Nama, NIM, dan Aplikasi yang diuji.'); return; }
+
+  const susScore = calcSUS();
+  const ueqScores = calcUEQ();
+  const umuxScore = calcUMUX();
+
+  const statusEl = document.getElementById('submit-status');
+  statusEl.className = 'submit-status status-sending';
+  statusEl.textContent = '⏳ Mengirim data ke server...';
+
+  const entry = {
+    timestamp: new Date().toISOString(),
+    nama, nim,
+    kelas: document.getElementById('f-kelas').value,
+    aplikasi: app,
+    pengalaman: document.getElementById('f-exp').value,
+    sus_score: susScore,
+    umux_score: umuxScore,
+    ueq_attractiveness: ueqScores.attractiveness,
+    ueq_perspicuity: ueqScores.perspicuity,
+    ueq_efficiency: ueqScores.efficiency,
+    ueq_dependability: ueqScores.dependability,
+    ueq_stimulation: ueqScores.stimulation,
+    ueq_novelty: ueqScores.novelty,
+    sus_raw: JSON.stringify(susAnswers),
+    ueq_raw: JSON.stringify(ueqAnswers),
+    umux_raw: JSON.stringify(umuxAnswers)
+  };
+
+  // Kirim ke Supabase
+  let serverOk = false;
+  if (supabase && SUPABASE_URL !== 'GANTI_DENGAN_URL_SUPABASE_ANDA') {
+    try {
+      const { error } = await supabase.from('responses').insert([entry]);
+      if (!error) {
+        serverOk = true;
+      } else {
+        console.error('Supabase error:', error);
+      }
+    } catch(e) {
+      console.error('Submit error:', e);
+    }
+  }
+
+  // Selalu simpan di localStorage sebagai cadangan
+  const stored = JSON.parse(localStorage.getItem('ux_lab_backup') || '[]');
+  stored.push({ ...entry, server_sent: serverOk });
+  localStorage.setItem('ux_lab_backup', JSON.stringify(stored));
+
+  if (serverOk) {
+    statusEl.className = 'submit-status status-ok';
+    statusEl.textContent = '✓ Data berhasil terkirim ke server dosen!';
+  } else if (SUPABASE_URL === 'GANTI_DENGAN_URL_SUPABASE_ANDA') {
+    statusEl.className = 'submit-status status-ok';
+    statusEl.textContent = '✓ (Mode demo) Data tersimpan lokal. Server belum dikonfigurasi.';
+  } else {
+    statusEl.className = 'submit-status status-err';
+    statusEl.textContent = '⚠ Gagal kirim ke server. Data disimpan lokal sebagai cadangan.';
+  }
+
+  // Tampilkan hasil
+  showResult(app, susScore, ueqScores, umuxScore);
+}
+
+function showResult(app, susScore, ueqScores, umuxScore) {
+  const grade = susGrade(susScore);
+  document.getElementById('res-app-name').textContent = app;
+  document.getElementById('res-sus-score').textContent = susScore;
+  document.getElementById('res-sus-grade').textContent = grade.label;
+  document.getElementById('res-sus-grade').className = 'result-grade ' + grade.cls;
+
+  document.getElementById('res-breakdown').innerHTML = `
+    <div class="score-item"><div class="val">${susScore}</div><div class="lbl">Skor SUS</div></div>
+    <div class="score-item"><div class="val">${umuxScore}</div><div class="lbl">Skor UMUX</div></div>
+    <div class="score-item"><div class="val">${ueqScores.attractiveness.toFixed(1)}</div><div class="lbl">UEQ Attract.</div></div>
+    <div class="score-item"><div class="val">${ueqScores.efficiency.toFixed(1)}</div><div class="lbl">UEQ Effic.</div></div>
+  `;
+
+  const dimLabels = { attractiveness: 'Attractiveness', perspicuity: 'Perspicuity', efficiency: 'Efficiency', dependability: 'Dependability', stimulation: 'Stimulation', novelty: 'Novelty' };
+  document.getElementById('res-ueq-profile').innerHTML = Object.entries(ueqScores).map(([k,v]) => `
+    <div class="ueq-bar-wrap">
+      <div class="ueq-bar-label"><span>${dimLabels[k]}</span><span>${v.toFixed(2)} — ${ueqLabel(v)}</span></div>
+      <div class="ueq-bar-track">
+        <div class="ueq-mid-line"></div>
+        <div style="position:absolute;top:0;height:100%;border-radius:100px;width:${Math.abs(v)/3*50}%;${v>=0?'left:50%':'right:50%'};background:${v>=0?'var(--purple)':'var(--accent)'}"></div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('q-progress').style.width = '100%';
+  goStep('result');
+}
+
+function resetForm() {
+  susAnswers = {}; ueqAnswers = {}; umuxAnswers = {};
+  ['f-nama','f-nim','f-app'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-kelas').value = '';
+  document.getElementById('f-exp').value = '';
+  document.getElementById('submit-status').textContent = '';
+  renderSUS(); renderUEQ(); renderUMUX();
+  goStep(1);
+}
+</script>
+</body>
+</html>
