@@ -720,7 +720,7 @@ function exportJSON() {
 async function confirmClear() {
   if (!confirm('PERHATIAN: Ini akan menghapus SEMUA data dari server. Tindakan tidak dapat dibatalkan.\n\nLanjutkan?')) return;
   if (!confirm('Yakin? Ekspor CSV dahulu sebelum menghapus!')) return;
-  if (!sb || SUPABASE_URL === 'GANTI_DENGAN_URL_SUPABASE_ANDA') { alert('Mode demo — tidak ada data yang dihapus.'); return; }
+  if (!sb || SUPABASE_URL === 'https://aaukqrmznbxsujlpwnhp.supabase.co') { alert('Mode demo — tidak ada data yang dihapus.'); return; }
   try {
     await sb.from('responses').delete().neq('id', 0);
     alert('Semua data berhasil dihapus.');
