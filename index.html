@@ -756,6 +756,16 @@ async function submitForm() {
   if (sb && SUPABASE_URL !== 'https://aaukqrmznbxsujlpwnhp.supabase.co') {
     try {
       const { error } = await sb.from('responses').insert([entry]);
+      const { error } = await sb
+  .from('responses')
+  .insert([entry]);
+
+console.log("ENTRY:", entry);
+console.log("ERROR:", error);
+
+if (error) {
+  alert(error.message);
+}
       if (!error) {
         serverOk = true;
       } else {
